@@ -1,0 +1,51 @@
+options:
+  grafana-version:
+    type: string
+    default: "11.4.0"
+    description: |
+      Version of Grafana to install. Defaults to 11.4.0.
+      
+  http-port:
+    type: int
+    default: 3000
+    description: |
+      Port on which Grafana web interface will be available.
+      
+  admin-user:
+    type: string
+    default: "admin"
+    description: |
+      Admin username for initial Grafana login.
+      
+  admin-password:
+    type: string
+    default: ""
+    description: |
+      Admin password for initial Grafana login.
+      If not set, a random password will be generated.
+      
+  external-url:
+    type: string
+    default: ""
+    description: |
+      The full URL under which Grafana is externally reachable 
+      (for example, if behind a reverse proxy).
+      If empty, will be auto-detected from unit IP.
+      
+  log-level:
+    type: string
+    default: "info"
+    description: |
+      Log level. One of: [debug, info, warn, error, critical]
+      
+  enable-anonymous:
+    type: boolean
+    default: false
+    description: |
+      Enable anonymous access to Grafana dashboards.
+      
+  allow-embedding:
+    type: boolean
+    default: false
+    description: |
+      Allow Grafana to be embedded in an iframe.

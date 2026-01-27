@@ -1,0 +1,28 @@
+name: grafana-machine
+display-name: Grafana Machine
+summary: Grafana visualization platform for machine deployments
+description: |
+  A Juju machine charm that deploys Grafana, an open-source platform for 
+  monitoring and observability. This charm supports consuming datasources
+  from Prometheus via the grafana_datasource interface.
+
+  Grafana features:
+  - Beautiful dashboards and visualizations
+  - Query and alert on metrics from multiple sources
+  - Support for Prometheus, Loki, and many other datasources
+  - Rich plugin ecosystem
+  - User management and teams
+
+maintainers:
+  - https://github.com/fourdollars/grafana-machine
+
+requires:
+  grafana-source:
+    interface: grafana_datasource
+
+peers:
+  grafana:
+    interface: grafana_peers
+
+assumes:
+  - juju >= 3.1

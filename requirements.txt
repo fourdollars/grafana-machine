@@ -1,0 +1,5 @@
+ops>=2.10
+pyyaml>=6.0
+jinja2>=3.1
+requests>=2.31
+cosl>=0.0.5

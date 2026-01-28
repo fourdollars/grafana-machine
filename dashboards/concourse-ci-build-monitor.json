@@ -912,12 +912,12 @@
       "targets": [
         {
           "expr": "concourse_workers_containers{juju_charm=\"concourse-ci-machine\"}",
-          "legendFormat": "Containers",
+          "legendFormat": "{{worker}} - Containers",
           "refId": "A"
         },
         {
           "expr": "concourse_workers_volumes{juju_charm=\"concourse-ci-machine\"}",
-          "legendFormat": "Volumes",
+          "legendFormat": "{{worker}} - Volumes",
           "refId": "B"
         }
       ],
@@ -932,13 +932,13 @@
       ],
       "seriesOverrides": [
         {
-          "alias": "Containers",
+          "alias": "/.*Containers/",
           "color": "#73BF69",
           "linewidth": 2,
           "fill": 3
         },
         {
-          "alias": "Volumes",
+          "alias": "/.*Volumes/",
           "color": "#FF9830",
           "linewidth": 2,
           "fill": 3
@@ -992,6 +992,313 @@
         "current": true,
         "avg": true,
         "max": true
+      }
+    },
+    {
+      "id": 40,
+      "type": "row",
+      "title": "Per-Worker Details",
+      "gridPos": {
+        "x": 0,
+        "y": 43,
+        "w": 24,
+        "h": 1
+      },
+      "collapsed": false
+    },
+    {
+      "id": 41,
+      "type": "table",
+      "title": "Worker Resource Summary",
+      "description": "Container, task, and volume counts per worker",
+      "gridPos": {
+        "x": 0,
+        "y": 44,
+        "w": 24,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "concourse_workers_containers{juju_charm=\"concourse-ci-machine\"}",
+          "refId": "A",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "expr": "concourse_workers_tasks{juju_charm=\"concourse-ci-machine\"}",
+          "refId": "B",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "expr": "concourse_workers_volumes{juju_charm=\"concourse-ci-machine\"}",
+          "refId": "C",
+          "format": "table",
+          "instant": true
+        }
+      ],
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "__name__": true,
+              "instance": true,
+              "job": true,
+              "juju_application": true,
+              "juju_charm": true,
+              "juju_model": true,
+              "juju_model_uuid": true,
+              "juju_unit": true
+            },
+            "indexByName": {
+              "worker": 0,
+              "platform": 1,
+              "tags": 2,
+              "Value #A": 3,
+              "Value #B": 4,
+              "Value #C": 5
+            },
+            "renameByName": {
+              "Value #A": "Containers",
+              "Value #B": "Tasks",
+              "Value #C": "Volumes",
+              "worker": "Worker",
+              "platform": "Platform",
+              "tags": "Tags"
+            }
+          }
+        }
+      ],
+      "options": {
+        "showHeader": true,
+        "sortBy": [
+          {
+            "displayName": "Containers",
+            "desc": true
+          }
+        ]
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "displayMode": "auto"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Containers"
+            },
+            "properties": [
+              {
+                "id": "custom.displayMode",
+                "value": "color-background"
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "value": null,
+                      "color": "green"
+                    },
+                    {
+                      "value": 20,
+                      "color": "yellow"
+                    },
+                    {
+                      "value": 50,
+                      "color": "orange"
+                    },
+                    {
+                      "value": 100,
+                      "color": "red"
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Tasks"
+            },
+            "properties": [
+              {
+                "id": "custom.displayMode",
+                "value": "gradient-gauge"
+              },
+              {
+                "id": "max",
+                "value": 10
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 42,
+      "type": "bargauge",
+      "title": "Top 10 Workers by Container Count",
+      "description": "Workers with the most active containers",
+      "gridPos": {
+        "x": 0,
+        "y": 52,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "topk(10, concourse_workers_containers{juju_charm=\"concourse-ci-machine\"})",
+          "refId": "A",
+          "legendFormat": "{{worker}}"
+        }
+      ],
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "showUnfilled": true
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 20,
+                "color": "yellow"
+              },
+              {
+                "value": 50,
+                "color": "orange"
+              },
+              {
+                "value": 100,
+                "color": "red"
+              }
+            ]
+          },
+          "mappings": []
+        }
+      }
+    },
+    {
+      "id": 43,
+      "type": "bargauge",
+      "title": "Active Tasks per Worker",
+      "description": "Current running tasks on each worker",
+      "gridPos": {
+        "x": 12,
+        "y": 52,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "concourse_workers_tasks{juju_charm=\"concourse-ci-machine\"} > 0",
+          "refId": "A",
+          "legendFormat": "{{worker}}"
+        }
+      ],
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "showUnfilled": true
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "blue"
+              },
+              {
+                "value": 5,
+                "color": "green"
+              },
+              {
+                "value": 10,
+                "color": "yellow"
+              },
+              {
+                "value": 20,
+                "color": "red"
+              }
+            ]
+          },
+          "mappings": [],
+          "noValue": "0"
+        }
+      }
+    },
+    {
+      "id": 44,
+      "type": "graph",
+      "title": "Container Distribution Over Time",
+      "description": "Container count trend for each worker",
+      "gridPos": {
+        "x": 0,
+        "y": 60,
+        "w": 24,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "concourse_workers_containers{juju_charm=\"concourse-ci-machine\"}",
+          "refId": "A",
+          "legendFormat": "{{worker}}"
+        }
+      ],
+      "yaxes": [
+        {
+          "format": "short",
+          "label": "Containers"
+        },
+        {
+          "format": "short"
+        }
+      ],
+      "legend": {
+        "show": true,
+        "values": true,
+        "current": true,
+        "max": true,
+        "avg": true,
+        "alignAsTable": true,
+        "rightSide": false,
+        "sideWidth": 300
+      },
+      "tooltip": {
+        "shared": true,
+        "sort": 2,
+        "value_type": "individual"
       }
     }
   ]

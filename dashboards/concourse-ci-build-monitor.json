@@ -37,7 +37,7 @@
       },
       "targets": [
         {
-          "expr": "max by (juju_application) (up{juju_application=\"concourse-ci-machine\"})",
+          "expr": "max by (juju_charm) (up{juju_charm=\"concourse-ci-machine\"})",
           "refId": "A"
         }
       ],
@@ -89,7 +89,7 @@
       },
       "targets": [
         {
-          "expr": "concourse_workers_registered",
+          "expr": "sum by (state) (concourse_workers_registered{juju_charm=\"concourse-ci-machine\"})",
           "refId": "A",
           "legendFormat": "{{state}}"
         }
@@ -217,7 +217,7 @@
       },
       "targets": [
         {
-          "expr": "concourse_builds_running",
+          "expr": "sum(concourse_builds_running{juju_charm=\"concourse-ci-machine\"})",
           "refId": "A"
         }
       ],
@@ -259,7 +259,7 @@
       },
       "targets": [
         {
-          "expr": "rate(concourse_builds_duration_seconds_sum[5m]) / rate(concourse_builds_duration_seconds_count[5m])",
+          "expr": "rate(concourse_builds_duration_seconds_sum{juju_charm=\"concourse-ci-machine\"}[5m]) / rate(concourse_builds_duration_seconds_count{juju_charm=\"concourse-ci-machine\"}[5m])",
           "refId": "A"
         }
       ],
@@ -304,7 +304,7 @@
       },
       "targets": [
         {
-          "expr": "(count(concourse_job_last_build_status == 1) or vector(0)) / (count(concourse_job_last_build_status >= -2 and concourse_job_last_build_status <= 1) or vector(1)) * 100",
+          "expr": "(count(concourse_job_last_build_status{juju_charm=\"concourse-ci-machine\"} == 1) or vector(0)) / (count(concourse_job_last_build_status{juju_charm=\"concourse-ci-machine\"} >= -2 and concourse_job_last_build_status{juju_charm=\"concourse-ci-machine\"} <= 1) or vector(1)) * 100",
           "refId": "A"
         }
       ],
@@ -355,32 +355,32 @@
       },
       "targets": [
         {
-          "expr": "count(concourse_job_last_build_status == 1) or vector(0)",
+          "expr": "count(concourse_job_last_build_status{juju_charm=\"concourse-ci-machine\"} == 1) or vector(0)",
           "legendFormat": "✅ Succeeded",
           "refId": "A"
         },
         {
-          "expr": "count(concourse_job_last_build_status == 0) or vector(0)",
+          "expr": "count(concourse_job_last_build_status{juju_charm=\"concourse-ci-machine\"} == 0) or vector(0)",
           "legendFormat": "❌ Failed",
           "refId": "B"
         },
         {
-          "expr": "count(concourse_job_last_build_status == -1) or vector(0)",
+          "expr": "count(concourse_job_last_build_status{juju_charm=\"concourse-ci-machine\"} == -1) or vector(0)",
           "legendFormat": "⚠️ Errored",
           "refId": "C"
         },
         {
-          "expr": "count(concourse_job_last_build_status == -2) or vector(0)",
+          "expr": "count(concourse_job_last_build_status{juju_charm=\"concourse-ci-machine\"} == -2) or vector(0)",
           "legendFormat": "🛑 Aborted",
           "refId": "D"
         },
         {
-          "expr": "count(concourse_job_last_build_status == -3) or vector(0)",
+          "expr": "count(concourse_job_last_build_status{juju_charm=\"concourse-ci-machine\"} == -3) or vector(0)",
           "legendFormat": "🔄 Running",
           "refId": "E"
         },
         {
-          "expr": "count(concourse_job_last_build_status == -4) or vector(0)",
+          "expr": "count(concourse_job_last_build_status{juju_charm=\"concourse-ci-machine\"} == -4) or vector(0)",
           "legendFormat": "⏸️ Pending",
           "refId": "F"
         }
@@ -513,22 +513,22 @@
       },
       "targets": [
         {
-          "expr": "increase(concourse_builds_succeeded_total[1h])",
+          "expr": "sum(increase(concourse_builds_succeeded_total{juju_charm=\"concourse-ci-machine\"}[1h]))",
           "legendFormat": "✅ Succeeded",
           "refId": "A"
         },
         {
-          "expr": "increase(concourse_builds_failed_total[1h])",
+          "expr": "sum(increase(concourse_builds_failed_total{juju_charm=\"concourse-ci-machine\"}[1h]))",
           "legendFormat": "❌ Failed",
           "refId": "B"
         },
         {
-          "expr": "increase(concourse_builds_errored_total[1h])",
+          "expr": "sum(increase(concourse_builds_errored_total{juju_charm=\"concourse-ci-machine\"}[1h]))",
           "legendFormat": "⚠️ Errored",
           "refId": "C"
         },
         {
-          "expr": "increase(concourse_builds_aborted_total[1h])",
+          "expr": "sum(increase(concourse_builds_aborted_total{juju_charm=\"concourse-ci-machine\"}[1h]))",
           "legendFormat": "🛑 Aborted",
           "refId": "D"
         }
@@ -654,22 +654,22 @@
       },
       "targets": [
         {
-          "expr": "rate(concourse_builds_succeeded_total[5m]) * 60",
+          "expr": "rate(concourse_builds_succeeded_total{juju_charm=\"concourse-ci-machine\"}[5m]) * 60",
           "legendFormat": "✅ Succeeded",
           "refId": "A"
         },
         {
-          "expr": "rate(concourse_builds_failed_total[5m]) * 60",
+          "expr": "rate(concourse_builds_failed_total{juju_charm=\"concourse-ci-machine\"}[5m]) * 60",
           "legendFormat": "❌ Failed",
           "refId": "B"
         },
         {
-          "expr": "rate(concourse_builds_errored_total[5m]) * 60",
+          "expr": "rate(concourse_builds_errored_total{juju_charm=\"concourse-ci-machine\"}[5m]) * 60",
           "legendFormat": "⚠️ Errored",
           "refId": "C"
         },
         {
-          "expr": "rate(concourse_builds_aborted_total[5m]) * 60",
+          "expr": "rate(concourse_builds_aborted_total{juju_charm=\"concourse-ci-machine\"}[5m]) * 60",
           "legendFormat": "🛑 Aborted",
           "refId": "D"
         }
@@ -730,12 +730,12 @@
       },
       "targets": [
         {
-          "expr": "concourse_builds_started_total",
+          "expr": "concourse_builds_started_total{juju_charm=\"concourse-ci-machine\"}",
           "legendFormat": "Started",
           "refId": "A"
         },
         {
-          "expr": "concourse_builds_finished_total",
+          "expr": "concourse_builds_finished_total{juju_charm=\"concourse-ci-machine\"}",
           "legendFormat": "Finished",
           "refId": "B"
         }
@@ -780,7 +780,7 @@
       },
       "targets": [
         {
-          "expr": "rate(concourse_builds_duration_seconds_sum[5m]) / rate(concourse_builds_duration_seconds_count[5m])",
+          "expr": "rate(concourse_builds_duration_seconds_sum{juju_charm=\"concourse-ci-machine\"}[5m]) / rate(concourse_builds_duration_seconds_count{juju_charm=\"concourse-ci-machine\"}[5m])",
           "legendFormat": "Avg Duration",
           "refId": "A"
         }
@@ -835,22 +835,22 @@
       },
       "targets": [
         {
-          "expr": "concourse_db_connections{dbname=\"api\"}",
+          "expr": "concourse_db_connections{juju_charm=\"concourse-ci-machine\",dbname=\"api\"}",
           "legendFormat": "API",
           "refId": "A"
         },
         {
-          "expr": "concourse_db_connections{dbname=\"backend\"}",
+          "expr": "concourse_db_connections{juju_charm=\"concourse-ci-machine\",dbname=\"backend\"}",
           "legendFormat": "Backend",
           "refId": "B"
         },
         {
-          "expr": "concourse_db_connections{dbname=\"gc\"}",
+          "expr": "concourse_db_connections{juju_charm=\"concourse-ci-machine\",dbname=\"gc\"}",
           "legendFormat": "GC",
           "refId": "C"
         },
         {
-          "expr": "concourse_db_connections{dbname=\"worker\"}",
+          "expr": "concourse_db_connections{juju_charm=\"concourse-ci-machine\",dbname=\"worker\"}",
           "legendFormat": "Worker",
           "refId": "D"
         }
@@ -911,12 +911,12 @@
       },
       "targets": [
         {
-          "expr": "concourse_workers_containers",
+          "expr": "concourse_workers_containers{juju_charm=\"concourse-ci-machine\"}",
           "legendFormat": "Containers",
           "refId": "A"
         },
         {
-          "expr": "concourse_workers_volumes",
+          "expr": "concourse_workers_volumes{juju_charm=\"concourse-ci-machine\"}",
           "legendFormat": "Volumes",
           "refId": "B"
         }
@@ -964,7 +964,7 @@
       },
       "targets": [
         {
-          "expr": "sum(rate(concourse_http_responses_duration_seconds_sum[5m])) / sum(rate(concourse_http_responses_duration_seconds_count[5m]))",
+          "expr": "sum(rate(concourse_http_responses_duration_seconds_sum{juju_charm=\"concourse-ci-machine\"}[5m])) / sum(rate(concourse_http_responses_duration_seconds_count{juju_charm=\"concourse-ci-machine\"}[5m]))",
           "legendFormat": "Avg Response Time",
           "refId": "A"
         }

@@ -1,5 +1,8 @@
 # Grafana Machine Charm
 
+[![GitHub](https://img.shields.io/badge/GitHub-fourdollars/grafana--machine-blue.svg)](https://github.com/fourdollars/grafana-machine)
+[![Charmhub](https://charmhub.io/grafana-machine/badge.svg)](https://charmhub.io/grafana-machine)
+
 A Juju machine charm for deploying Grafana on bare metal, VMs, or LXD containers.
 
 ## Features

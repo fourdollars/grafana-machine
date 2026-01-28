@@ -1,0 +1,995 @@
+{
+  "title": "Concourse CI - Build Monitor",
+  "tags": [
+    "concourse",
+    "ci",
+    "builds",
+    "monitoring"
+  ],
+  "timezone": "browser",
+  "schemaVersion": 16,
+  "version": 0,
+  "refresh": "30s",
+  "editable": true,
+  "panels": [
+    {
+      "id": 1,
+      "type": "row",
+      "title": "System Health Overview",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 1
+      },
+      "collapsed": false
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Web Server",
+      "description": "Concourse web server availability",
+      "gridPos": {
+        "x": 0,
+        "y": 1,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "expr": "max by (juju_application) (up{juju_application=\"concourse-ci-machine\"})",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "graphMode": "none",
+        "colorMode": "background",
+        "textMode": "value_and_name"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": 0,
+                "color": "red"
+              },
+              {
+                "value": 1,
+                "color": "green"
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "value": "0",
+              "text": "DOWN"
+            },
+            {
+              "type": "value",
+              "value": "1",
+              "text": "RUNNING"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Active Workers",
+      "description": "Number of registered Concourse workers",
+      "gridPos": {
+        "x": 6,
+        "y": 1,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "expr": "concourse_workers_registered",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "graphMode": "area",
+        "colorMode": "value"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": 0,
+                "color": "red"
+              },
+              {
+                "value": 1,
+                "color": "green"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Running Builds",
+      "description": "Currently executing builds",
+      "gridPos": {
+        "x": 12,
+        "y": 1,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "expr": "concourse_builds_running",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "graphMode": "area",
+        "colorMode": "value"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": 0,
+                "color": "blue"
+              },
+              {
+                "value": 1,
+                "color": "light-blue"
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        }
+      }
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Avg Build Duration",
+      "description": "Average time to complete builds",
+      "gridPos": {
+        "x": 18,
+        "y": 1,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "expr": "rate(concourse_builds_duration_seconds_sum[5m]) / rate(concourse_builds_duration_seconds_count[5m])",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "graphMode": "area",
+        "colorMode": "value"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": 0,
+                "color": "green"
+              },
+              {
+                "value": 30,
+                "color": "yellow"
+              },
+              {
+                "value": 60,
+                "color": "orange"
+              }
+            ]
+          },
+          "unit": "s",
+          "decimals": 1
+        }
+      }
+    },
+    {
+      "id": 10,
+      "type": "row",
+      "title": "Build Status Summary",
+      "gridPos": {
+        "x": 0,
+        "y": 5,
+        "w": 24,
+        "h": 1
+      },
+      "collapsed": false
+    },
+    {
+      "id": 11,
+      "type": "stat",
+      "title": "✅ Succeeded",
+      "description": "Total successful builds",
+      "gridPos": {
+        "x": 0,
+        "y": 6,
+        "w": 6,
+        "h": 5
+      },
+      "targets": [
+        {
+          "expr": "concourse_builds_succeeded_total",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "graphMode": "area",
+        "colorMode": "background"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": 0,
+                "color": "green"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 12,
+      "type": "stat",
+      "title": "❌ Failed",
+      "description": "Total failed builds",
+      "gridPos": {
+        "x": 6,
+        "y": 6,
+        "w": 6,
+        "h": 5
+      },
+      "targets": [
+        {
+          "expr": "concourse_builds_failed_total",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "graphMode": "area",
+        "colorMode": "background"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": 0,
+                "color": "red"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 13,
+      "type": "stat",
+      "title": "⚠️ Errored",
+      "description": "Total errored builds",
+      "gridPos": {
+        "x": 12,
+        "y": 6,
+        "w": 6,
+        "h": 5
+      },
+      "targets": [
+        {
+          "expr": "concourse_builds_errored_total",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "graphMode": "area",
+        "colorMode": "background"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": 0,
+                "color": "orange"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 14,
+      "type": "stat",
+      "title": "🛑 Aborted",
+      "description": "Total aborted builds",
+      "gridPos": {
+        "x": 18,
+        "y": 6,
+        "w": 6,
+        "h": 5
+      },
+      "targets": [
+        {
+          "expr": "concourse_builds_aborted_total",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "graphMode": "area",
+        "colorMode": "background"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": 0,
+                "color": "yellow"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 15,
+      "type": "gauge",
+      "title": "Success Rate",
+      "description": "Percentage of successful builds",
+      "gridPos": {
+        "x": 0,
+        "y": 11,
+        "w": 8,
+        "h": 6
+      },
+      "targets": [
+        {
+          "expr": "concourse_builds_succeeded_total / (concourse_builds_succeeded_total + concourse_builds_failed_total + concourse_builds_errored_total + concourse_builds_aborted_total) * 100",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "showThresholdLabels": true,
+        "showThresholdMarkers": true
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": 0,
+                "color": "red"
+              },
+              {
+                "value": 50,
+                "color": "orange"
+              },
+              {
+                "value": 70,
+                "color": "yellow"
+              },
+              {
+                "value": 90,
+                "color": "green"
+              }
+            ]
+          },
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "decimals": 1
+        }
+      }
+    },
+    {
+      "id": 16,
+      "type": "piechart",
+      "title": "Build Status Distribution",
+      "description": "Proportion of builds by status",
+      "gridPos": {
+        "x": 8,
+        "y": 11,
+        "w": 8,
+        "h": 6
+      },
+      "targets": [
+        {
+          "expr": "concourse_builds_succeeded_total",
+          "legendFormat": "✅ Succeeded",
+          "refId": "A"
+        },
+        {
+          "expr": "concourse_builds_failed_total",
+          "legendFormat": "❌ Failed",
+          "refId": "B"
+        },
+        {
+          "expr": "concourse_builds_errored_total",
+          "legendFormat": "⚠️ Errored",
+          "refId": "C"
+        },
+        {
+          "expr": "concourse_builds_aborted_total",
+          "legendFormat": "🛑 Aborted",
+          "refId": "D"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "values": [
+            "value",
+            "percent"
+          ]
+        },
+        "pieType": "pie",
+        "displayLabels": [
+          "percent"
+        ],
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      },
+      "fieldConfig": {
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "✅ Succeeded"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "green"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "❌ Failed"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "⚠️ Errored"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "orange"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "🛑 Aborted"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "yellow"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 17,
+      "type": "stat",
+      "title": "Build Stats (Last Hour)",
+      "description": "Build counts in the last hour",
+      "gridPos": {
+        "x": 16,
+        "y": 11,
+        "w": 8,
+        "h": 6
+      },
+      "targets": [
+        {
+          "expr": "increase(concourse_builds_succeeded_total[1h])",
+          "legendFormat": "Succeeded",
+          "refId": "A"
+        },
+        {
+          "expr": "increase(concourse_builds_failed_total[1h])",
+          "legendFormat": "Failed",
+          "refId": "B"
+        },
+        {
+          "expr": "increase(concourse_builds_errored_total[1h])",
+          "legendFormat": "Errored",
+          "refId": "C"
+        },
+        {
+          "expr": "increase(concourse_builds_aborted_total[1h])",
+          "legendFormat": "Aborted",
+          "refId": "D"
+        }
+      ],
+      "options": {
+        "graphMode": "none",
+        "colorMode": "value",
+        "orientation": "vertical"
+      },
+      "fieldConfig": {
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Succeeded"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "green"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Failed"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Errored"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "orange"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Aborted"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "yellow"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 20,
+      "type": "row",
+      "title": "Build Trends",
+      "gridPos": {
+        "x": 0,
+        "y": 17,
+        "w": 24,
+        "h": 1
+      },
+      "collapsed": false
+    },
+    {
+      "id": 21,
+      "type": "graph",
+      "title": "Build Rate by Status",
+      "description": "Rate of builds per minute by status",
+      "gridPos": {
+        "x": 0,
+        "y": 18,
+        "w": 24,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "rate(concourse_builds_succeeded_total[5m]) * 60",
+          "legendFormat": "✅ Succeeded",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(concourse_builds_failed_total[5m]) * 60",
+          "legendFormat": "❌ Failed",
+          "refId": "B"
+        },
+        {
+          "expr": "rate(concourse_builds_errored_total[5m]) * 60",
+          "legendFormat": "⚠️ Errored",
+          "refId": "C"
+        },
+        {
+          "expr": "rate(concourse_builds_aborted_total[5m]) * 60",
+          "legendFormat": "🛑 Aborted",
+          "refId": "D"
+        }
+      ],
+      "yaxes": [
+        {
+          "format": "short",
+          "label": "Builds per minute"
+        },
+        {
+          "format": "short"
+        }
+      ],
+      "seriesOverrides": [
+        {
+          "alias": "✅ Succeeded",
+          "color": "#73BF69",
+          "linewidth": 2,
+          "fill": 3
+        },
+        {
+          "alias": "❌ Failed",
+          "color": "#F2495C",
+          "linewidth": 2,
+          "fill": 3
+        },
+        {
+          "alias": "⚠️ Errored",
+          "color": "#FF9830",
+          "linewidth": 2,
+          "fill": 3
+        },
+        {
+          "alias": "🛑 Aborted",
+          "color": "#FADE2A",
+          "linewidth": 2,
+          "fill": 3
+        }
+      ],
+      "legend": {
+        "show": true,
+        "values": true,
+        "current": true,
+        "max": true,
+        "avg": true
+      }
+    },
+    {
+      "id": 22,
+      "type": "graph",
+      "title": "Build Starts vs Finishes",
+      "description": "Comparison of started and finished builds",
+      "gridPos": {
+        "x": 0,
+        "y": 26,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "concourse_builds_started_total",
+          "legendFormat": "Started",
+          "refId": "A"
+        },
+        {
+          "expr": "concourse_builds_finished_total",
+          "legendFormat": "Finished",
+          "refId": "B"
+        }
+      ],
+      "yaxes": [
+        {
+          "format": "short",
+          "label": "Total Builds"
+        },
+        {
+          "format": "short"
+        }
+      ],
+      "seriesOverrides": [
+        {
+          "alias": "Started",
+          "color": "#5794F2",
+          "linewidth": 2
+        },
+        {
+          "alias": "Finished",
+          "color": "#B877D9",
+          "linewidth": 2
+        }
+      ],
+      "legend": {
+        "show": true,
+        "values": true,
+        "current": true
+      }
+    },
+    {
+      "id": 23,
+      "type": "graph",
+      "title": "Build Duration Over Time",
+      "description": "Average build duration",
+      "gridPos": {
+        "x": 12,
+        "y": 26,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "rate(concourse_builds_duration_seconds_sum[5m]) / rate(concourse_builds_duration_seconds_count[5m])",
+          "legendFormat": "Avg Duration",
+          "refId": "A"
+        }
+      ],
+      "yaxes": [
+        {
+          "format": "s",
+          "label": "Duration"
+        },
+        {
+          "format": "short"
+        }
+      ],
+      "seriesOverrides": [
+        {
+          "alias": "Avg Duration",
+          "color": "#96D98D",
+          "linewidth": 2,
+          "fill": 5
+        }
+      ],
+      "legend": {
+        "show": true,
+        "values": true,
+        "current": true,
+        "avg": true,
+        "max": true
+      }
+    },
+    {
+      "id": 30,
+      "type": "row",
+      "title": "System Resources",
+      "gridPos": {
+        "x": 0,
+        "y": 34,
+        "w": 24,
+        "h": 1
+      },
+      "collapsed": false
+    },
+    {
+      "id": 31,
+      "type": "graph",
+      "title": "Database Connections by Pool",
+      "description": "PostgreSQL connection pools by type",
+      "gridPos": {
+        "x": 0,
+        "y": 35,
+        "w": 12,
+        "h": 7
+      },
+      "targets": [
+        {
+          "expr": "concourse_db_connections{dbname=\"api\"}",
+          "legendFormat": "API",
+          "refId": "A"
+        },
+        {
+          "expr": "concourse_db_connections{dbname=\"backend\"}",
+          "legendFormat": "Backend",
+          "refId": "B"
+        },
+        {
+          "expr": "concourse_db_connections{dbname=\"gc\"}",
+          "legendFormat": "GC",
+          "refId": "C"
+        },
+        {
+          "expr": "concourse_db_connections{dbname=\"worker\"}",
+          "legendFormat": "Worker",
+          "refId": "D"
+        }
+      ],
+      "yaxes": [
+        {
+          "format": "short",
+          "label": "Connections"
+        },
+        {
+          "format": "short"
+        }
+      ],
+      "seriesOverrides": [
+        {
+          "alias": "API",
+          "color": "#5794F2",
+          "linewidth": 2,
+          "fill": 3
+        },
+        {
+          "alias": "Backend",
+          "color": "#B877D9",
+          "linewidth": 2,
+          "fill": 3
+        },
+        {
+          "alias": "GC",
+          "color": "#FF9830",
+          "linewidth": 2,
+          "fill": 3
+        },
+        {
+          "alias": "Worker",
+          "color": "#73BF69",
+          "linewidth": 2,
+          "fill": 3
+        }
+      ],
+      "legend": {
+        "show": true,
+        "values": true,
+        "current": true,
+        "avg": true,
+        "max": true
+      }
+    },
+    {
+      "id": 32,
+      "type": "graph",
+      "title": "Worker Containers",
+      "description": "Active containers per worker",
+      "gridPos": {
+        "x": 12,
+        "y": 35,
+        "w": 12,
+        "h": 7
+      },
+      "targets": [
+        {
+          "expr": "concourse_workers_containers",
+          "legendFormat": "Containers",
+          "refId": "A"
+        },
+        {
+          "expr": "concourse_workers_volumes",
+          "legendFormat": "Volumes",
+          "refId": "B"
+        }
+      ],
+      "yaxes": [
+        {
+          "format": "short",
+          "label": "Count"
+        },
+        {
+          "format": "short"
+        }
+      ],
+      "seriesOverrides": [
+        {
+          "alias": "Containers",
+          "color": "#73BF69",
+          "linewidth": 2,
+          "fill": 3
+        },
+        {
+          "alias": "Volumes",
+          "color": "#FF9830",
+          "linewidth": 2,
+          "fill": 3
+        }
+      ],
+      "legend": {
+        "show": true,
+        "values": true,
+        "current": true,
+        "max": true
+      }
+    },
+    {
+      "id": 33,
+      "type": "graph",
+      "title": "HTTP Response Time",
+      "description": "Average HTTP response duration",
+      "gridPos": {
+        "x": 0,
+        "y": 42,
+        "w": 24,
+        "h": 7
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(concourse_http_responses_duration_seconds_sum[5m])) / sum(rate(concourse_http_responses_duration_seconds_count[5m]))",
+          "legendFormat": "Avg Response Time",
+          "refId": "A"
+        }
+      ],
+      "yaxes": [
+        {
+          "format": "s",
+          "label": "Duration"
+        },
+        {
+          "format": "short"
+        }
+      ],
+      "seriesOverrides": [
+        {
+          "alias": "Avg Response Time",
+          "color": "#FADE2A",
+          "linewidth": 2,
+          "fill": 3
+        }
+      ],
+      "legend": {
+        "show": true,
+        "values": true,
+        "current": true,
+        "avg": true,
+        "max": true
+      }
+    }
+  ]
+}

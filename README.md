@@ -10,6 +10,7 @@ This charm deploys Grafana, an open-source platform for monitoring and observabi
 
 - ✅ Deploys Grafana on machine deployments (LXD, OpenStack, bare metal)
 - ✅ Auto-configures Prometheus datasources via Juju relations
+- ✅ **Config-based dashboard provisioning (dashboard0-dashboard9)**
 - ✅ Configurable HTTP port and admin credentials
 - ✅ Automatic datasource provisioning
 - ✅ Peer relation for password sharing across units
@@ -50,6 +51,9 @@ juju config grafana grafana-version=11.3.0
 
 # Set external URL (for reverse proxy setups)
 juju config grafana external-url=https://grafana.example.com
+
+# Provision dashboards via config
+juju config grafana dashboard0="$(cat my-dashboard.json)"
 ```
 
 ## Architecture
@@ -61,6 +65,8 @@ juju config grafana external-url=https://grafana.example.com
 - **Data Directory**: `/var/lib/grafana/`
 - **Logs**: `/var/log/grafana/`
 - **Datasource Provisioning**: `/etc/grafana/provisioning/datasources/`
+- **Dashboard Provisioning**: `/etc/grafana/provisioning/dashboards/`
+- **Dashboard Files**: `/var/lib/grafana/dashboards/`
 
 ### Relations
 
@@ -92,6 +98,144 @@ datasources:
   url: http://<prometheus-ip>:9090
   isDefault: true
   editable: true
+```
+
+## Dashboard Provisioning
+
+The charm supports provisioning up to 10 dashboards via configuration options (`dashboard0` through `dashboard9`).
+
+### How It Works
+
+1. **Set Dashboard JSON**: Use `juju config` to set dashboard JSON content
+2. **Auto-Provisioning**: Charm writes dashboard files to `/var/lib/grafana/dashboards/`
+3. **Grafana Detection**: Grafana automatically loads dashboards from the provisioning configuration
+4. **Updates**: Changes to dashboard config trigger automatic reprovisioning
+
+### Basic Usage
+
+```bash
+# Provision a single dashboard
+juju config grafana dashboard0="$(cat dashboard.json)"
+
+# Provision multiple dashboards
+juju config grafana dashboard0="$(cat dashboard-1.json)"
+juju config grafana dashboard1="$(cat dashboard-2.json)"
+juju config grafana dashboard2="$(cat dashboard-3.json)"
+
+# Remove a dashboard (set to empty string)
+juju config grafana dashboard0=""
+```
+
+### Dashboard JSON Format
+
+Dashboards must be in raw Grafana dashboard JSON format (not API wrapper format).
+
+**✅ Correct Format** (use this):
+```json
+{
+  "title": "My Dashboard",
+  "tags": ["monitoring"],
+  "timezone": "browser",
+  "panels": [...]
+}
+```
+
+**❌ Incorrect Format** (API wrapper - don't use):
+```json
+{
+  "dashboard": {
+    "title": "My Dashboard",
+    ...
+  },
+  "overwrite": true
+}
+```
+
+### Exporting Dashboards from Grafana
+
+1. Open dashboard in Grafana UI
+2. Click ⚙️ (Dashboard settings)
+3. Click "JSON Model" in left sidebar
+4. Copy the JSON content
+5. If it has a `"dashboard"` wrapper, extract it:
+   ```bash
+   cat exported.json | jq '.dashboard' > dashboard.json
+   ```
+
+### Example Workflow
+
+```bash
+# 1. Export dashboard from Grafana UI
+# (Copy JSON Model content to clipboard)
+
+# 2. Save to file
+cat > my-dashboard.json << 'EOF'
+{
+  "title": "My Monitoring Dashboard",
+  "tags": ["production", "metrics"],
+  "timezone": "browser",
+  "panels": [
+    {
+      "id": 1,
+      "type": "graph",
+      "title": "CPU Usage",
+      "targets": [{"expr": "cpu_usage"}]
+    }
+  ]
+}
+EOF
+
+# 3. Provision to Grafana
+juju config grafana dashboard0="$(cat my-dashboard.json)"
+
+# 4. Dashboard appears in Grafana within ~30 seconds
+# Access via Grafana UI → Dashboards
+```
+
+### Dashboard Slots
+
+The charm provides 10 dashboard slots:
+- `dashboard0` through `dashboard9`
+- Each slot can hold one dashboard
+- Dashboards are named: `<title>-<slot>.json`
+- Empty slots are ignored
+
+### Updating Dashboards
+
+```bash
+# Update existing dashboard
+juju config grafana dashboard0="$(cat updated-dashboard.json)"
+
+# Dashboard is automatically reprovisioned
+# Grafana rescans within 30 seconds
+```
+
+### Removing Dashboards
+
+```bash
+# Remove dashboard from slot
+juju config grafana dashboard0=""
+
+# Grafana will remove the dashboard on next scan
+```
+
+### Configuration Details
+
+Generated provisioning configuration at `/etc/grafana/provisioning/dashboards/default.yaml`:
+
+```yaml
+apiVersion: 1
+providers:
+  - name: default
+    orgId: 1
+    folder: ''
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards
+      foldersFromFilesStructure: false
 ```
 
 ## Files and Directories

@@ -49,3 +49,64 @@ options:
     default: false
     description: |
       Allow Grafana to be embedded in an iframe.
+      
+  dashboard0:
+    type: string
+    default: ""
+    description: |
+      Dashboard JSON content (slot 0). Provide the complete Grafana dashboard JSON.
+      Example: juju config grafana dashboard0="$(cat dashboard.json)"
+      
+  dashboard1:
+    type: string
+    default: ""
+    description: |
+      Dashboard JSON content (slot 1). Provide the complete Grafana dashboard JSON.
+      
+  dashboard2:
+    type: string
+    default: ""
+    description: |
+      Dashboard JSON content (slot 2). Provide the complete Grafana dashboard JSON.
+      
+  dashboard3:
+    type: string
+    default: ""
+    description: |
+      Dashboard JSON content (slot 3). Provide the complete Grafana dashboard JSON.
+      
+  dashboard4:
+    type: string
+    default: ""
+    description: |
+      Dashboard JSON content (slot 4). Provide the complete Grafana dashboard JSON.
+      
+  dashboard5:
+    type: string
+    default: ""
+    description: |
+      Dashboard JSON content (slot 5). Provide the complete Grafana dashboard JSON.
+      
+  dashboard6:
+    type: string
+    default: ""
+    description: |
+      Dashboard JSON content (slot 6). Provide the complete Grafana dashboard JSON.
+      
+  dashboard7:
+    type: string
+    default: ""
+    description: |
+      Dashboard JSON content (slot 7). Provide the complete Grafana dashboard JSON.
+      
+  dashboard8:
+    type: string
+    default: ""
+    description: |
+      Dashboard JSON content (slot 8). Provide the complete Grafana dashboard JSON.
+      
+  dashboard9:
+    type: string
+    default: ""
+    description: |
+      Dashboard JSON content (slot 9). Provide the complete Grafana dashboard JSON.

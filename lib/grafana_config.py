@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 """
-Grafana Configuration Library - Handles grafana.ini and datasource provisioning
+Grafana Configuration Library - Handles grafana.ini, datasource, and dashboard provisioning
 """
 
 import logging
 import yaml
+import json
+import os
 from pathlib import Path
 from typing import Dict, List, Any, Optional
 
@@ -15,6 +17,7 @@ GRAFANA_CONFIG_FILE = f"{GRAFANA_CONFIG_DIR}/grafana.ini"
 GRAFANA_DATA_DIR = "/var/lib/grafana"
 GRAFANA_LOGS_DIR = "/var/log/grafana"
 GRAFANA_PROVISIONING_DIR = f"{GRAFANA_CONFIG_DIR}/provisioning"
+GRAFANA_DASHBOARDS_DIR = f"{GRAFANA_DATA_DIR}/dashboards"
 
 
 class GrafanaConfig:
@@ -160,3 +163,86 @@ external_enabled = false
             config["uid"] = uid
 
         return config
+
+    def provision_dashboards(self):
+        """Provision dashboards from config options (dashboard0-dashboard9)"""
+        dashboards = []
+        dashboard_dir = Path(GRAFANA_DASHBOARDS_DIR)
+        dashboard_dir.mkdir(parents=True, exist_ok=True)
+
+        expected_files = set()
+
+        for i in range(10):
+            dashboard_key = f"dashboard{i}"
+            dashboard_json = self.config.get(dashboard_key, "")
+
+            if not dashboard_json or not dashboard_json.strip():
+                for existing_file in dashboard_dir.glob(f"*-{i}.json"):
+                    logger.info(
+                        f"Removing dashboard file for empty slot {i}: {existing_file.name}"
+                    )
+                    existing_file.unlink()
+                continue
+
+            try:
+                dashboard_data = json.loads(dashboard_json)
+
+                dashboard_title = dashboard_data.get("title", f"Dashboard {i}")
+                safe_filename = (
+                    dashboard_title.lower().replace(" ", "-").replace("/", "-")
+                )
+                dashboard_file = dashboard_dir / f"{safe_filename}-{i}.json"
+
+                dashboard_file.write_text(json.dumps(dashboard_data, indent=2))
+
+                import pwd
+                import grp
+
+                grafana_uid = pwd.getpwnam("grafana").pw_uid
+                grafana_gid = grp.getgrnam("grafana").gr_gid
+                os.chown(dashboard_file, grafana_uid, grafana_gid)
+
+                expected_files.add(dashboard_file.name)
+                dashboards.append(dashboard_title)
+                logger.info(f"Provisioned dashboard: {dashboard_title} (slot {i})")
+
+            except json.JSONDecodeError as e:
+                logger.error(f"Invalid JSON in {dashboard_key}: {e}")
+            except Exception as e:
+                logger.error(f"Failed to provision {dashboard_key}: {e}")
+
+        if dashboards:
+            provisioning_config = {
+                "apiVersion": 1,
+                "providers": [
+                    {
+                        "name": "default",
+                        "orgId": 1,
+                        "folder": "",
+                        "type": "file",
+                        "disableDeletion": False,
+                        "updateIntervalSeconds": 30,
+                        "allowUiUpdates": True,
+                        "options": {
+                            "path": str(dashboard_dir),
+                            "foldersFromFilesStructure": False,
+                        },
+                    }
+                ],
+            }
+
+            dashboards_config_path = Path(
+                f"{GRAFANA_PROVISIONING_DIR}/dashboards/default.yaml"
+            )
+            dashboards_config_path.parent.mkdir(parents=True, exist_ok=True)
+
+            with dashboards_config_path.open("w") as f:
+                yaml.dump(
+                    provisioning_config, f, default_flow_style=False, sort_keys=False
+                )
+
+            logger.info(
+                f"Dashboard provisioning configured: {len(dashboards)} dashboard(s)"
+            )
+        else:
+            logger.info("No dashboards configured")

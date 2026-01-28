@@ -26,6 +26,7 @@ GRAFANA_CONFIG_FILE = f"{GRAFANA_CONFIG_DIR}/grafana.ini"
 GRAFANA_LOGS_DIR = "/var/log/grafana"
 GRAFANA_PLUGINS_DIR = f"{GRAFANA_DATA_DIR}/plugins"
 GRAFANA_PROVISIONING_DIR = f"{GRAFANA_CONFIG_DIR}/provisioning"
+GRAFANA_DASHBOARDS_DIR = f"{GRAFANA_DATA_DIR}/dashboards"
 
 
 class GrafanaInstaller:
@@ -78,6 +79,7 @@ class GrafanaInstaller:
             GRAFANA_CONFIG_DIR,
             GRAFANA_LOGS_DIR,
             GRAFANA_PLUGINS_DIR,
+            GRAFANA_DASHBOARDS_DIR,
             f"{GRAFANA_PROVISIONING_DIR}/datasources",
             f"{GRAFANA_PROVISIONING_DIR}/dashboards",
             f"{GRAFANA_PROVISIONING_DIR}/notifiers",

@@ -145,6 +145,9 @@ class GrafanaMachineCharm(CharmBase):
             # Generate initial configuration
             self.config_manager.generate_config(admin_password)
 
+            # Provision dashboards from config
+            self.config_manager.provision_dashboards()
+
             # Create systemd service
             self.installer.create_systemd_service()
 
@@ -169,6 +172,9 @@ class GrafanaMachineCharm(CharmBase):
 
             # Update datasource provisioning
             self._provision_datasources()
+
+            # Update dashboard provisioning
+            self.config_manager.provision_dashboards()
 
             # Restart service to apply changes
             if self.installer.is_service_running():

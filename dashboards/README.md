@@ -1,304 +1,181 @@
 # Grafana Dashboards
 
-This directory contains pre-built Grafana dashboards for monitoring various systems.
+Pre-built dashboards for monitoring systems deployed via Juju.
 
-## Concourse CI - Build Monitor Dashboard
+## Concourse CI - Build Monitor
 
 **File**: `concourse-ci-build-monitor.json`
 
-A comprehensive, production-ready dashboard for monitoring Concourse CI with an intuitive UI/UX design featuring color-coded panels, emoji indicators, and hierarchical information layout.
+Production-ready dashboard with 13 panels across 4 rows showing system health, build status distribution, trends, and resource usage.
 
-### Features
+### Dashboard Layout
 
-#### System Health Overview (Row 1)
-- **Web Server Status** - UP/DOWN indicator with green/red background
-- **Active Workers** - Real-time count of registered workers
-- **Running Builds** - Currently executing builds
-- **Avg Build Duration** - Average time to complete builds
+| Row | Content |
+|-----|---------|
+| **1. System Health** | Web status, Active workers, Running builds, Avg duration |
+| **2. Visual Analysis** | Success rate gauge, Status distribution pie chart, Last hour stats |
+| **3. Build Trends** | Build rate, Starts vs Finishes, Duration over time |
+| **4. System Resources** | Database connections, Worker containers, HTTP response time |
 
-#### Build Status Summary (Row 2)
-- **✅ Succeeded** - Total successful builds (green background)
-- **❌ Failed** - Total failed builds (red background)
-- **⚠️ Errored** - Total errored builds (orange background)
-- **🛑 Aborted** - Total aborted builds (yellow background)
+### Prerequisites
 
-#### Visual Analysis (Row 3)
-- **Success Rate Gauge** - Percentage gauge with color thresholds (red<50%, orange<70%, yellow<90%, green≥90%)
-- **Build Status Distribution** - Pie chart with percentages showing build outcome proportions
-- **Build Stats (Last Hour)** - Quick view of recent build activity by status
+**⚠️ Requires Concourse Prometheus Exporter**
 
-#### Build Trends (Row 4)
-- **Build Rate by Status** - Time series graph showing builds per minute for each status
-- **Build Starts vs Finishes** - Comparison to detect queuing and backlog
-- **Build Duration Over Time** - Historical trend of average build durations
+Concourse 8.0.0 doesn't expose per-job build status. Without the exporter, status panels show "0".
 
-#### System Resources (Row 5)
-- **Database Connections by Pool** - PostgreSQL connections broken down by pool type (API, Backend, GC, Worker)
-- **Worker Containers** - Active container and volume counts per worker
-- **HTTP Response Time** - Average API response duration
+**Quick Setup:**
+```bash
+# 1. Install fly CLI on Concourse web unit
+juju ssh concourse-ci-machine/0 -- "sudo wget -q -O /usr/local/bin/fly http://localhost:8080/api/v1/cli?arch=amd64\&platform=linux && sudo chmod +x /usr/local/bin/fly"
 
-### Metrics Used
+# 2. Get admin password
+ADMIN_PASS=$(juju ssh concourse-ci-machine/0 -- "sudo grep CONCOURSE_ADD_LOCAL_USER /var/lib/concourse/config.env | cut -d= -f2")
 
-**Build Metrics:**
-- `concourse_builds_running` - Currently running builds
-- `concourse_builds_succeeded_total` - Total successful builds
-- `concourse_builds_failed_total` - Total failed builds
-- `concourse_builds_errored_total` - Total errored builds
-- `concourse_builds_aborted_total` - Total aborted builds
-- `concourse_builds_started_total` - Total started builds
-- `concourse_builds_finished_total` - Total finished builds
-- `concourse_builds_duration_seconds_sum/count` - Build duration statistics
+# 3. Create exporter config
+juju ssh concourse-ci-machine/0 -- "sudo tee /etc/concourse-exporter.env" << EOF
+CONCOURSE_URL=http://localhost:8080
+CONCOURSE_TEAM=main
+CONCOURSE_USERNAME=admin
+CONCOURSE_PASSWORD=$ADMIN_PASS
+EXPORTER_PORT=9358
+SCRAPE_INTERVAL=30
+EOF
 
-**System Metrics:**
-- `up{juju_application="concourse-ci-machine"}` - Service health status
-- `concourse_workers_registered{state="running"}` - Running worker count (workers have states: running, landing, landed, retiring, stalled)
-- `concourse_workers_containers` - Container count per worker
-- `concourse_workers_volumes` - Volume count per worker
-- `concourse_db_connections{dbname="api|backend|gc|worker"}` - Database connection pools
-- `concourse_http_responses_duration_seconds_sum/count` - HTTP response time metrics
+# 4. Deploy exporter script + systemd service (see repo for files)
+# 5. Add to Prometheus config and restart
+# 6. Verify: curl http://<concourse-ip>:9358/metrics | grep concourse_job_last_build_status
+```
 
-### Design Principles
-
-- **Color Coding**: Green (success), Red (failure), Orange (error), Yellow (abort), Blue (running)
-- **Emoji Indicators**: ✅ ❌ ⚠️ 🛑 for quick visual recognition
-- **Hierarchical Layout**: Health → Status → Trends → Resources (top to bottom)
-- **Auto-Refresh**: 30-second refresh rate for real-time monitoring
-- **Consistent Theme**: Matching colors and styles across all panels
+The exporter provides `concourse_job_last_build_status` metric:
+- `1` = ✅ Succeeded
+- `0` = ❌ Failed  
+- `-1` = ⚠️ Errored
+- `-2` = 🛑 Aborted
+- `-3` = 🔄 Running
+- `-4` = ⏸️ Pending
 
 ### Installation
 
-#### Method 1: Via Charm Config-Based Provisioning (Recommended)
-
-If you deployed the Grafana charm with config-based dashboard provisioning enabled:
-
+**Via Juju (Recommended):**
 ```bash
-# Deploy dashboard via Juju config
 juju config grafana dashboard0="$(cat concourse-ci-build-monitor.json)"
-
-# Wait 30-40 seconds for Grafana to scan the provisioning directory
-# Dashboard will automatically appear in Grafana UI
+# Wait 30-40 seconds for provisioning
 ```
 
-**Advantages:**
-- No manual import needed
-- Dashboard survives Grafana restarts
-- Managed via Juju configuration
-- Easy to update or remove
+**Via Grafana UI:**
+1. Go to `http://<grafana-ip>:3000`
+2. Dashboards → Import → Upload JSON
+3. Select Prometheus datasource
 
-#### Method 2: Via Grafana UI
-
-1. Navigate to Grafana at `http://<grafana-ip>:3000`
-2. Login with admin credentials
-3. Click **Dashboards** → **Import**
-4. Upload `concourse-ci-build-monitor.json`
-5. Select the Prometheus datasource
-6. Click **Import**
-
-#### Method 3: Via API
-
-```bash
-GRAFANA_IP="<your-grafana-ip>"
-ADMIN_PASS="<your-admin-password>"
-
-# Prepare the API payload
-jq -n --slurpfile dashboard concourse-ci-build-monitor.json \
-  '{dashboard: $dashboard[0], overwrite: true}' > payload.json
-
-# Import via API
-curl -X POST \
-  -H "Content-Type: application/json" \
-  -u admin:$ADMIN_PASS \
-  http://$GRAFANA_IP:3000/api/dashboards/db \
-  -d @payload.json
-```
-
-#### Method 4: Via Juju SSH
-
-```bash
-GRAFANA_UNIT="grafana/0"
-DASHBOARD_PATH="/home/ubuntu/concourse-dashboard.json"
-
-# Copy dashboard to unit
-juju scp concourse-ci-build-monitor.json $GRAFANA_UNIT:$DASHBOARD_PATH
-
-# Import via API
-juju ssh $GRAFANA_UNIT -- "bash -c '
-ADMIN_PASS=\$(sudo grep admin_password /etc/grafana/grafana.ini | cut -d\" \" -f3)
-jq -n --slurpfile dashboard $DASHBOARD_PATH \
-  \"{dashboard: \\\$dashboard[0], overwrite: true}\" | \
-curl -X POST \
-  -H \"Content-Type: application/json\" \
-  -u admin:\$ADMIN_PASS \
-  http://localhost:3000/api/dashboards/db \
-  -d @-
-'"
-```
-
-### Dashboard URL
-
-After installation, the dashboard will be available at:
-```
-http://<grafana-ip>:3000/d/dfbi027x9pdz4c/concourse-ci-build-monitor
-```
-
-### Configuration
-
-The dashboard is configured to:
-- **Refresh**: Every 30 seconds
-- **Time Range**: Last 1 hour (adjustable)
-- **Timezone**: Browser timezone
-- **Panels**: 21 panels across 5 rows
-- **Theme**: Works with both light and dark Grafana themes
-
-### Customization
-
-You can customize the dashboard by:
-
-1. **Adjusting Time Range**: Use the time picker in the top-right corner
-2. **Modifying Refresh Rate**: Click the refresh dropdown (5s, 10s, 30s, 1m, etc.)
-3. **Editing Panels**: Click the panel title → Edit
-4. **Changing Thresholds**: Edit panel → Field → Thresholds
-5. **Adding Variables**: Dashboard Settings → Variables (e.g., filter by pipeline)
-6. **Setting Up Alerts**: Panel Edit → Alert tab (requires alert notification channels)
+**Dashboard URL**: `http://<grafana-ip>:3000/d/afbi7tim93ojkf/concourse-ci-build-monitor`
 
 ### Troubleshooting
 
-#### Panel Shows "No data"
+**Fresh Deployment Shows Zero Data**
 
-**Common Causes:**
-1. **Prometheus not scraping Concourse**: Check `juju status --relations` for `prometheus:scrape` relation
-2. **Time range too narrow**: Expand to last 6 hours or more
-3. **Concourse not generating metrics**: Trigger some builds to populate metrics
-4. **Label mismatch**: This dashboard expects Juju-deployed Concourse with labels like `juju_application="concourse-ci-machine"`
+Normal until you create pipelines and trigger builds. Quick test:
 
-**Verification Steps:**
 ```bash
-# Check if Prometheus is scraping Concourse
-curl -s http://<prometheus-ip>:9090/api/v1/targets | jq '.data.activeTargets[] | select(.labels.juju_application == "concourse-ci-machine")'
+# Setup fly CLI
+CONCOURSE_IP=$(juju status concourse-ci-machine --format=json | jq -r '.applications."concourse-ci-machine".units | to_entries[0].value.address')
+wget http://$CONCOURSE_IP:8080/api/v1/cli?arch=amd64&platform=linux -O fly
+chmod +x fly && sudo mv fly /usr/local/bin/
 
-# Test a specific metric
-curl -s 'http://<prometheus-ip>:9090/api/v1/query?query=concourse_builds_running' | jq .
+# Login (get password: juju ssh concourse-ci-machine/0 -- "sudo grep CONCOURSE_ADD_LOCAL_USER /var/lib/concourse/web-config.env")
+fly -t ci login -c http://$CONCOURSE_IP:8080 -u admin -p <password>
+
+# Create test pipeline
+cat > /tmp/test.yml << 'EOF'
+jobs:
+  - name: success
+    plan:
+      - task: pass
+        config:
+          platform: linux
+          image_resource:
+            type: registry-image
+            source: {repository: busybox}
+          run: {path: echo, args: ["OK"]}
+  - name: failure
+    plan:
+      - task: fail
+        config:
+          platform: linux
+          image_resource:
+            type: registry-image
+            source: {repository: busybox}
+          run: {path: sh, args: ["-c", "exit 1"]}
+EOF
+
+fly -t ci set-pipeline -p test -c /tmp/test.yml -n
+fly -t ci unpause-pipeline -p test
+
+# Trigger builds
+fly -t ci trigger-job -j test/success
+fly -t ci trigger-job -j test/failure
+
+# Wait 60s, refresh dashboard
 ```
 
-#### Web Server Panel Shows "No data"
+**Common Issues**
 
-This panel uses the `up` metric with Juju labels. Verify the query:
+| Problem | Check |
+|---------|-------|
+| No data on panels | `juju status --relations \| grep prometheus` |
+| Metrics not found | `curl http://<concourse-ip>:9391/metrics` |
+| Dashboard not loading | `juju ssh grafana/0 -- systemctl status grafana-server` |
+
+**Verify Prometheus Scraping:**
 ```bash
-curl -s 'http://<prometheus-ip>:9090/api/v1/query?query=up{juju_application="concourse-ci-machine"}' | jq .
+curl -s http://<prometheus-ip>:9090/api/v1/query?query=concourse_builds_running | jq .
 ```
-
-If the metric exists but panel shows no data, the label selector might need adjustment for your deployment.
-
-#### HTTP Response Time Panel Empty
-
-This panel requires sufficient HTTP traffic. Try:
-1. Trigger several builds to generate API requests
-2. Wait 5-10 minutes for rate calculations to stabilize
-3. The metric `concourse_http_responses_duration_seconds_count` should be increasing
-
-#### Database Connections Panel Shows "No data"
-
-Verify the `concourse_db_connections` metric has the correct labels:
-```bash
-curl -s 'http://<prometheus-ip>:9090/api/v1/query?query=concourse_db_connections' | jq '.data.result[0].metric'
-```
-
-Expected labels: `dbname` with values `api`, `backend`, `gc`, or `worker`.
-
-#### Metrics Not Found
-
-If metrics are completely missing:
-- Ensure Concourse is running: `juju status concourse-ci-machine`
-- Check Prometheus scrape config: `juju ssh prometheus/0 -- sudo cat /etc/prometheus/prometheus.yml`
-- Verify the relation: `juju status --relations | grep prometheus`
-- Check Concourse metrics endpoint: `curl http://<concourse-ip>:9391/metrics`
-
-#### Dashboard Not Loading
-
-1. Check Grafana service: `juju ssh grafana/0 -- systemctl status grafana-server`
-2. Check logs: `juju debug-log --include grafana`
-3. Verify datasource connection: Grafana UI → Configuration → Data Sources
-4. Test Prometheus: `curl http://<prometheus-ip>:9090/api/v1/query?query=up`
-
-### Label Structure
-
-This dashboard is designed for **Juju-deployed Concourse** which adds these labels to all metrics:
-- `juju_application`: Application name (e.g., `concourse-ci-machine`)
-- `juju_unit`: Unit name (e.g., `concourse-ci-machine/0`)
-- `juju_model`: Juju model name
-- `juju_model_uuid`: Model UUID
-- `instance`: Instance identifier
-- `job`: Prometheus job name
-
-If your Concourse is deployed differently, you may need to adjust the label selectors in panel queries.
 
 ## Creating Custom Dashboards
 
-To create your own dashboards:
+1. **Explore**: Grafana → Explore → `{__name__=~"concourse_.*"}`
+2. **Build**: Create panels and test queries
+3. **Export**: Dashboard Settings → JSON Model
+4. **Clean**: Remove `id`, set `version` to 0
+5. **Document**: Add section to this README
 
-1. **Explore Metrics**: Use Grafana's Explore feature to query Prometheus
-2. **Build Panels**: Create visualizations for your metrics
-3. **Test Queries**: Verify queries return data before adding to dashboard
-4. **Export JSON**: Dashboard Settings → JSON Model → Copy
-5. **Clean JSON**: Remove `id` field and set `version` to 0 for portability
-6. **Save to Repository**: Save the JSON file in this directory
-7. **Document**: Update this README with dashboard details
+### Key Concourse Metrics
 
-### Available Concourse Metrics
+- `concourse_builds_*` - Build counters and durations
+- `concourse_workers_*` - Worker registration, containers, volumes
+- `concourse_db_*` - Database connections
+- `concourse_http_*` - API response times
 
-Run this query in Grafana Explore to see all available metrics:
+### Query Examples
+
 ```promql
-{__name__=~"concourse_.*"}
+# Success rate (finished builds only)
+(count(concourse_job_last_build_status == 1) or vector(0)) / 
+(count(concourse_job_last_build_status >= -2 and concourse_job_last_build_status <= 1) or vector(1)) * 100
+
+# Build rate per minute
+rate(concourse_builds_succeeded_total[5m]) * 60
+
+# Average build duration
+sum(rate(concourse_builds_duration_seconds_sum[5m])) / sum(rate(concourse_builds_duration_seconds_count[5m]))
 ```
-
-Key metric categories:
-- **Builds**: `concourse_builds_*` (running, succeeded, failed, errored, aborted, started, finished, duration)
-- **Workers**: `concourse_workers_*` (registered, containers, volumes, tasks)
-- **Database**: `concourse_db_*` (connections, queries, locks)
-- **HTTP**: `concourse_http_*` (response times, request counts)
-- **Resources**: `concourse_resource_*` (checks, gets, puts)
-- **Volumes**: `concourse_volumes_*` (created, destroyed, streamed)
-- **Steps**: `concourse_steps_*` (waiting, initializing, executing, succeeded, failed, errored)
-
-### Query Best Practices
-
-1. **Use aggregation for multi-series metrics**: `sum(metric) by (label)`
-2. **Apply rate for counters**: `rate(metric_total[5m])`
-3. **Use irate for volatile metrics**: `irate(metric_total[1m])`
-4. **Calculate averages from histograms**: `sum(rate(metric_sum[5m])) / sum(rate(metric_count[5m]))`
-5. **Add fallbacks for sparse data**: `metric or vector(0)`
 
 ## Contributing
 
-When adding new dashboards to this directory:
+When adding dashboards:
 
-1. **Use descriptive filenames**: `system-name-purpose.json` (e.g., `concourse-ci-build-monitor.json`)
-2. **Update this README**: Add a section describing the dashboard features and usage
-3. **Include metric descriptions**: Document all metrics used and their purpose
-4. **Test thoroughly**: Verify all panels display data before committing
-5. **Clean the JSON**: Remove `id` fields, set `version` to 0, use consistent formatting
-6. **Use consistent naming**: Panels, rows, and variables should follow clear conventions
-7. **Add descriptions**: Every panel should have a description explaining what it shows
+1. Use descriptive filename: `system-name-purpose.json`
+2. Document in this README
+3. Test all panels with real data
+4. Clean JSON: Remove `id`, set `version` to 0, add panel descriptions
 
-### Dashboard JSON Checklist
+**Checklist:**
+- [ ] Unique `uid`, descriptive `title`
+- [ ] All panels have descriptions
+- [ ] Queries tested and working
+- [ ] Consistent colors and formatting
 
-Before committing a dashboard JSON file:
+## Links
 
-- [ ] `id` field removed (for portability)
-- [ ] `version` set to 0 (Grafana will manage versioning)
-- [ ] `uid` is unique (use lowercase alphanumeric)
-- [ ] `title` is descriptive
-- [ ] `tags` are relevant
-- [ ] All panels have titles and descriptions
-- [ ] Queries tested against real data
-- [ ] Time ranges and refresh rates are sensible
-- [ ] Color schemes are consistent
-- [ ] Legends are clear and informative
-
-## Related Documentation
-
-- [Grafana Dashboard Documentation](https://grafana.com/docs/grafana/latest/dashboards/)
-- [Grafana Dashboard Best Practices](https://grafana.com/docs/grafana/latest/dashboards/build-dashboards/best-practices/)
-- [Prometheus Query Language](https://prometheus.io/docs/prometheus/latest/querying/basics/)
-- [Concourse Metrics Documentation](https://concourse-ci.org/metrics.html)
-- [Juju Prometheus Integration](https://charmhub.io/prometheus-k8s)
+- [Grafana Docs](https://grafana.com/docs/grafana/latest/dashboards/)
+- [PromQL Guide](https://prometheus.io/docs/prometheus/latest/querying/basics/)
+- [Concourse Metrics](https://concourse-ci.org/metrics.html)

@@ -78,9 +78,9 @@
     },
     {
       "id": 3,
-      "type": "stat",
+      "type": "piechart",
       "title": "Active Workers",
-      "description": "Number of running Concourse workers",
+      "description": "Concourse workers by state (running, landing, landed, retiring, stalled)",
       "gridPos": {
         "x": 6,
         "y": 1,
@@ -89,30 +89,119 @@
       },
       "targets": [
         {
-          "expr": "sum(concourse_workers_registered{state=\"running\"})",
-          "refId": "A"
+          "expr": "concourse_workers_registered",
+          "refId": "A",
+          "legendFormat": "{{state}}"
         }
       ],
       "options": {
-        "graphMode": "area",
-        "colorMode": "value"
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "values": [
+            "value"
+          ]
+        },
+        "pieType": "pie",
+        "tooltip": {
+          "mode": "single"
+        },
+        "displayLabels": [
+          "percent"
+        ]
       },
       "fieldConfig": {
         "defaults": {
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
+          "mappings": [],
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            }
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "running"
+            },
+            "properties": [
               {
-                "value": 0,
-                "color": "red"
-              },
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "green"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "landing"
+            },
+            "properties": [
               {
-                "value": 1,
-                "color": "green"
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "landed"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "light-blue"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "retiring"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "orange"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "stalled"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
               }
             ]
           }
-        }
+        ]
       }
     },
     {
@@ -203,171 +292,19 @@
       }
     },
     {
-      "id": 10,
-      "type": "row",
-      "title": "Build Status Summary",
-      "gridPos": {
-        "x": 0,
-        "y": 5,
-        "w": 24,
-        "h": 1
-      },
-      "collapsed": false
-    },
-    {
-      "id": 11,
-      "type": "stat",
-      "title": "✅ Succeeded",
-      "description": "Total successful builds",
-      "gridPos": {
-        "x": 0,
-        "y": 6,
-        "w": 6,
-        "h": 5
-      },
-      "targets": [
-        {
-          "expr": "concourse_builds_succeeded_total",
-          "refId": "A"
-        }
-      ],
-      "options": {
-        "graphMode": "area",
-        "colorMode": "background"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": 0,
-                "color": "green"
-              }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "id": 12,
-      "type": "stat",
-      "title": "❌ Failed",
-      "description": "Total failed builds",
-      "gridPos": {
-        "x": 6,
-        "y": 6,
-        "w": 6,
-        "h": 5
-      },
-      "targets": [
-        {
-          "expr": "concourse_builds_failed_total",
-          "refId": "A"
-        }
-      ],
-      "options": {
-        "graphMode": "area",
-        "colorMode": "background"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": 0,
-                "color": "red"
-              }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "id": 13,
-      "type": "stat",
-      "title": "⚠️ Errored",
-      "description": "Total errored builds",
-      "gridPos": {
-        "x": 12,
-        "y": 6,
-        "w": 6,
-        "h": 5
-      },
-      "targets": [
-        {
-          "expr": "concourse_builds_errored_total",
-          "refId": "A"
-        }
-      ],
-      "options": {
-        "graphMode": "area",
-        "colorMode": "background"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": 0,
-                "color": "orange"
-              }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "id": 14,
-      "type": "stat",
-      "title": "🛑 Aborted",
-      "description": "Total aborted builds",
-      "gridPos": {
-        "x": 18,
-        "y": 6,
-        "w": 6,
-        "h": 5
-      },
-      "targets": [
-        {
-          "expr": "concourse_builds_aborted_total",
-          "refId": "A"
-        }
-      ],
-      "options": {
-        "graphMode": "area",
-        "colorMode": "background"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": 0,
-                "color": "yellow"
-              }
-            ]
-          }
-        }
-      }
-    },
-    {
       "id": 15,
       "type": "gauge",
       "title": "Success Rate",
-      "description": "Percentage of successful builds",
+      "description": "Percentage of finished jobs with successful builds (excludes running/pending)",
       "gridPos": {
         "x": 0,
-        "y": 11,
+        "y": 5,
         "w": 8,
         "h": 6
       },
       "targets": [
         {
-          "expr": "concourse_builds_succeeded_total / (concourse_builds_succeeded_total + concourse_builds_failed_total + concourse_builds_errored_total + concourse_builds_aborted_total) * 100",
+          "expr": "(count(concourse_job_last_build_status == 1) or vector(0)) / (count(concourse_job_last_build_status >= -2 and concourse_job_last_build_status <= 1) or vector(1)) * 100",
           "refId": "A"
         }
       ],
@@ -409,33 +346,43 @@
       "id": 16,
       "type": "piechart",
       "title": "Build Status Distribution",
-      "description": "Proportion of builds by status",
+      "description": "Latest build status for all jobs",
       "gridPos": {
         "x": 8,
-        "y": 11,
+        "y": 5,
         "w": 8,
         "h": 6
       },
       "targets": [
         {
-          "expr": "concourse_builds_succeeded_total",
+          "expr": "count(concourse_job_last_build_status == 1) or vector(0)",
           "legendFormat": "✅ Succeeded",
           "refId": "A"
         },
         {
-          "expr": "concourse_builds_failed_total",
+          "expr": "count(concourse_job_last_build_status == 0) or vector(0)",
           "legendFormat": "❌ Failed",
           "refId": "B"
         },
         {
-          "expr": "concourse_builds_errored_total",
+          "expr": "count(concourse_job_last_build_status == -1) or vector(0)",
           "legendFormat": "⚠️ Errored",
           "refId": "C"
         },
         {
-          "expr": "concourse_builds_aborted_total",
+          "expr": "count(concourse_job_last_build_status == -2) or vector(0)",
           "legendFormat": "🛑 Aborted",
           "refId": "D"
+        },
+        {
+          "expr": "count(concourse_job_last_build_status == -3) or vector(0)",
+          "legendFormat": "🔄 Running",
+          "refId": "E"
+        },
+        {
+          "expr": "count(concourse_job_last_build_status == -4) or vector(0)",
+          "legendFormat": "⏸️ Pending",
+          "refId": "F"
         }
       ],
       "options": {
@@ -519,54 +466,110 @@
                 }
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "🔄 Running"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "⏸️ Pending"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "semi-dark-purple"
+                }
+              }
+            ]
           }
         ]
       }
     },
     {
       "id": 17,
-      "type": "stat",
+      "type": "piechart",
       "title": "Build Stats (Last Hour)",
-      "description": "Build counts in the last hour",
+      "description": "Build distribution by status in the last hour",
       "gridPos": {
         "x": 16,
-        "y": 11,
+        "y": 5,
         "w": 8,
         "h": 6
       },
       "targets": [
         {
           "expr": "increase(concourse_builds_succeeded_total[1h])",
-          "legendFormat": "Succeeded",
+          "legendFormat": "✅ Succeeded",
           "refId": "A"
         },
         {
           "expr": "increase(concourse_builds_failed_total[1h])",
-          "legendFormat": "Failed",
+          "legendFormat": "❌ Failed",
           "refId": "B"
         },
         {
           "expr": "increase(concourse_builds_errored_total[1h])",
-          "legendFormat": "Errored",
+          "legendFormat": "⚠️ Errored",
           "refId": "C"
         },
         {
           "expr": "increase(concourse_builds_aborted_total[1h])",
-          "legendFormat": "Aborted",
+          "legendFormat": "🛑 Aborted",
           "refId": "D"
         }
       ],
       "options": {
-        "graphMode": "none",
-        "colorMode": "value",
-        "orientation": "vertical"
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "values": [
+            "value",
+            "percent"
+          ]
+        },
+        "pieType": "pie",
+        "tooltip": {
+          "mode": "single"
+        },
+        "displayLabels": [
+          "percent"
+        ]
       },
       "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            }
+          }
+        },
         "overrides": [
           {
             "matcher": {
               "id": "byName",
-              "options": "Succeeded"
+              "options": "✅ Succeeded"
             },
             "properties": [
               {
@@ -581,7 +584,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Failed"
+              "options": "❌ Failed"
             },
             "properties": [
               {
@@ -596,7 +599,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Errored"
+              "options": "⚠️ Errored"
             },
             "properties": [
               {
@@ -611,7 +614,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Aborted"
+              "options": "🛑 Aborted"
             },
             "properties": [
               {
@@ -632,7 +635,7 @@
       "title": "Build Trends",
       "gridPos": {
         "x": 0,
-        "y": 17,
+        "y": 11,
         "w": 24,
         "h": 1
       },
@@ -645,7 +648,7 @@
       "description": "Rate of builds per minute by status",
       "gridPos": {
         "x": 0,
-        "y": 18,
+        "y": 12,
         "w": 24,
         "h": 8
       },
@@ -721,7 +724,7 @@
       "description": "Comparison of started and finished builds",
       "gridPos": {
         "x": 0,
-        "y": 26,
+        "y": 20,
         "w": 12,
         "h": 8
       },
@@ -771,7 +774,7 @@
       "description": "Average build duration",
       "gridPos": {
         "x": 12,
-        "y": 26,
+        "y": 20,
         "w": 12,
         "h": 8
       },
@@ -813,7 +816,7 @@
       "title": "System Resources",
       "gridPos": {
         "x": 0,
-        "y": 34,
+        "y": 28,
         "w": 24,
         "h": 1
       },
@@ -826,7 +829,7 @@
       "description": "PostgreSQL connection pools by type",
       "gridPos": {
         "x": 0,
-        "y": 35,
+        "y": 29,
         "w": 12,
         "h": 7
       },
@@ -902,7 +905,7 @@
       "description": "Active containers per worker",
       "gridPos": {
         "x": 12,
-        "y": 35,
+        "y": 29,
         "w": 12,
         "h": 7
       },
@@ -955,7 +958,7 @@
       "description": "Average HTTP response duration",
       "gridPos": {
         "x": 0,
-        "y": 42,
+        "y": 36,
         "w": 24,
         "h": 7
       },

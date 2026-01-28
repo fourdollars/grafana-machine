@@ -122,6 +122,12 @@ class GrafanaMachineCharm(CharmBase):
             self._on_peer_relation_created,
         )
 
+        # Action handlers
+        self.framework.observe(
+            self.on.get_admin_password_action,
+            self._on_get_admin_password_action,
+        )
+
     @property
     def peers(self):
         """Return the peer relation for use by GrafanaSourceConsumer."""
@@ -413,6 +419,24 @@ class GrafanaMachineCharm(CharmBase):
             self.unit.status = ActiveStatus(
                 f"Grafana ready ({datasource_count} datasources) - {external_url}"
             )
+
+    def _on_get_admin_password_action(self, event):
+        """Handle get-admin-password action"""
+        try:
+            username = self.config.get("admin-user", "admin")
+            password = self._get_or_generate_admin_password()
+
+            event.set_results(
+                {
+                    "username": username,
+                    "password": password,
+                    "message": "Use these credentials to login to Grafana",
+                }
+            )
+            logger.info("Admin password retrieved via action")
+        except Exception as e:
+            event.fail(f"Failed to retrieve admin password: {e}")
+            logger.error(f"Get admin password action failed: {e}", exc_info=True)
 
 
 if __name__ == "__main__":

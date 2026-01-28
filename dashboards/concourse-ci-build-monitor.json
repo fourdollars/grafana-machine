@@ -80,7 +80,7 @@
       "id": 3,
       "type": "stat",
       "title": "Active Workers",
-      "description": "Number of registered Concourse workers",
+      "description": "Number of running Concourse workers",
       "gridPos": {
         "x": 6,
         "y": 1,
@@ -89,7 +89,7 @@
       },
       "targets": [
         {
-          "expr": "concourse_workers_registered",
+          "expr": "sum(concourse_workers_registered{state=\"running\"})",
           "refId": "A"
         }
       ],

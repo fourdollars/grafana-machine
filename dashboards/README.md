@@ -51,7 +51,7 @@ A comprehensive, production-ready dashboard for monitoring Concourse CI with an 
 
 **System Metrics:**
 - `up{juju_application="concourse-ci-machine"}` - Service health status
-- `concourse_workers_registered` - Registered worker count
+- `concourse_workers_registered{state="running"}` - Running worker count (workers have states: running, landing, landed, retiring, stalled)
 - `concourse_workers_containers` - Container count per worker
 - `concourse_workers_volumes` - Volume count per worker
 - `concourse_db_connections{dbname="api|backend|gc|worker"}` - Database connection pools

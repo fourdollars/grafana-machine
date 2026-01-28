@@ -8,6 +8,7 @@ import logging
 import sys
 import requests
 import json
+import time
 from pathlib import Path
 from typing import Dict, List, Any, Optional
 
@@ -177,11 +178,12 @@ class GrafanaMachineCharm(CharmBase):
             self.config_manager.provision_dashboards()
 
             # Restart service to apply changes
-            if self.installer.is_service_running():
+            needs_restart = self.installer.is_service_running()
+            if needs_restart:
                 self.installer.restart_service()
                 logger.info("Grafana restarted with new configuration")
 
-            self._update_status()
+            self._update_status_with_retry(delay=3 if needs_restart else 0)
 
         except Exception as e:
             logger.error(f"Configuration update failed: {e}")
@@ -219,11 +221,12 @@ class GrafanaMachineCharm(CharmBase):
             self._provision_datasources()
 
             # Restart service to reload provisioning
-            if self.installer.is_service_running():
+            needs_restart = self.installer.is_service_running()
+            if needs_restart:
                 self.installer.restart_service()
                 logger.info("Grafana restarted with new datasources")
 
-            self._update_status()
+            self._update_status_with_retry(delay=3 if needs_restart else 0)
 
         except Exception as e:
             logger.error(f"Failed to update datasources: {e}")
@@ -320,6 +323,64 @@ class GrafanaMachineCharm(CharmBase):
             logger.debug(f"Failed to query Grafana API: {e}")
 
         return 0
+
+    def _update_status_with_retry(self, delay: int = 0, max_retries: int = 3):
+        """
+        Update status with retry logic to handle service restart delays.
+
+        Args:
+            delay: Initial delay in seconds before first status check
+            max_retries: Maximum number of retry attempts
+        """
+        if delay > 0:
+            logger.info(
+                f"Waiting {delay}s for Grafana to stabilize before status check"
+            )
+            time.sleep(delay)
+
+        for attempt in range(max_retries):
+            if not self.installer.is_installed():
+                self.unit.status = BlockedStatus("Grafana not installed")
+                return
+
+            if not self.installer.is_service_running():
+                self.unit.status = BlockedStatus("Grafana service not running")
+                return
+
+            # Get datasource count from API
+            datasource_count = self._get_datasource_count_from_api()
+
+            # If we got a valid response (or this is the last attempt), update status
+            if datasource_count > 0 or attempt == max_retries - 1:
+                # Get external URL
+                http_port = self.config.get("http-port", 3000)
+                external_url = self.config.get("external-url", "")
+                if not external_url:
+                    try:
+                        unit_ip = self.model.get_binding(
+                            "juju-info"
+                        ).network.bind_address
+                        external_url = f"http://{unit_ip}:{http_port}"
+                    except Exception:
+                        external_url = f"http://localhost:{http_port}"
+
+                if datasource_count == 0:
+                    self.unit.status = ActiveStatus(
+                        f"Grafana ready (no datasources) - {external_url}"
+                    )
+                else:
+                    self.unit.status = ActiveStatus(
+                        f"Grafana ready ({datasource_count} datasources) - {external_url}"
+                    )
+                return
+
+            # If API query failed and we have retries left, wait and try again
+            if attempt < max_retries - 1:
+                retry_delay = 2**attempt  # Exponential backoff: 1s, 2s, 4s
+                logger.debug(
+                    f"API query returned 0, retrying in {retry_delay}s (attempt {attempt + 1}/{max_retries})"
+                )
+                time.sleep(retry_delay)
 
     def _update_status(self):
         """Update unit status based on current state"""
